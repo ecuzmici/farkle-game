@@ -1,7 +1,5 @@
-// components/Join.tsx
 "use client";
 import { useState } from "react";
-import { Room, RoomEvent } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 
 const Join = () => {
@@ -20,31 +18,10 @@ const Join = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/livekit/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          roomName: matchID.toUpperCase(),
-          participantName: `player-${matchID}`
-        })
-      });
-
-      const { token } = await response.json();
-      if (!token) throw new Error('Failed to get token');
-
-      const room = new Room();
-
-      room.on(RoomEvent.Connected, () => {
-        console.log('Player connected to room');
-        router.push(`/game/${matchID}?role=join`);
-      });
-
-      await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token, {
-        autoSubscribe: true
-      });
-
+      // Redirect to game page as joiner
+      router.push(`/game/${matchID}?role=join`);
     } catch (err) {
-      console.error('Join error:', err);
+      console.error('Failed to join match:', err);
       setError('Failed to join game. Please check the match ID.');
     } finally {
       setIsConnecting(false);
