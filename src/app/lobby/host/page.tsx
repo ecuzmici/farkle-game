@@ -1,53 +1,52 @@
 // components/Host.tsx
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from 'next/navigation';
-import { Room, RoomEvent } from 'livekit-client';
 import { nanoid } from "nanoid";
+import { useState, useEffect } from "react";
+import { Room } from 'livekit-client';
+import { useRouter } from 'next/navigation';
 
 const Host = () => {
   const [matchID, setMatchID] = useState('');
-  const [room, setRoom] = useState<Room | null>(null);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    const generatedMatchID = nanoid(6).toUpperCase();
-    setMatchID(generatedMatchID);
-
     const connectToRoom = async () => {
       try {
-        // Get token from your API
+        const generatedMatchID = nanoid(6).toUpperCase();
+        setMatchID(generatedMatchID);
+
         const response = await fetch('/api/livekit/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             roomName: generatedMatchID,
-            participantName: 'host'
+            participantName: `host-${generatedMatchID}`
           })
         });
-        const { token } = await response.json();
 
-        const room = new Room();
-        console.log(process.env.NEXT_PUBLIC_LIVEKIT_URL)
-        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL, token);
+        const { token } = await response.json();
+        if (!token) throw new Error('Failed to get token');
         
-        room.on(RoomEvent.ParticipantConnected, () => {
-          if (room.numParticipants === 1) {
-            router.push(`/game/${generatedMatchID}?role=host`);
-          }
+        const room = new Room();
+        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token);
+
+        room.once('connected', () => {
+          router.push(`/game/${generatedMatchID}?role=host`);
         });
 
-        setRoom(room);
-      } catch (error) {
-        console.error('Failed to connect to room:', error);
+        return () => {
+          room.disconnect();
+        };
+      } catch (err) {
+        console.error('Failed to connect:', err);
+        setError('Failed to create game room');
+        setIsConnecting(false);
       }
     };
 
     connectToRoom();
-
-    return () => {
-      room?.disconnect();
-    };
   }, []);
 
   return (
@@ -56,7 +55,13 @@ const Host = () => {
       <div className="bg-gray-700 px-6 py-3 rounded-lg">
         <p className="font-mono text-xl font-bold tracking-wide text-gray-200">{matchID}</p>
       </div>
-      <p className="mt-4 text-sm text-gray-400">Waiting for player to join...</p>
+      {error ? (
+        <p className="mt-4 text-sm text-red-400">{error}</p>
+      ) : (
+        <p className="mt-4 text-sm text-gray-400">
+          {isConnecting ? "Setting up game..." : "Waiting for player to join..."}
+        </p>
+      )}
     </div>
   );
 };

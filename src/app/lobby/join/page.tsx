@@ -1,7 +1,8 @@
+// components/Join.tsx
 "use client";
 import { useState } from "react";
+import { Room } from 'livekit-client';
 import { useRouter } from 'next/navigation';
-import { Room, RoomEvent } from 'livekit-client';
 
 const Join = () => {
   const [matchID, setMatchID] = useState('');
@@ -19,24 +20,27 @@ const Join = () => {
     setError('');
 
     try {
-      // Get token from your API
       const response = await fetch('/api/livekit/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           roomName: matchID.toUpperCase(),
-          participantName: 'player'
+          participantName: `player-${matchID}`
         })
       });
+
       const { token } = await response.json();
+      if (!token) throw new Error('Failed to get token');
 
       const room = new Room();
-      await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL, token);
+      await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token);
 
-      router.push(`/game/${matchID}?role=join`);
+      room.once('connected', () => {
+        router.push(`/game/${matchID}?role=join`);
+      });
     } catch (err) {
       console.error('Join error:', err);
-      setError('Failed to connect. Please check the match ID.');
+      setError('Failed to join game. Please check the match ID.');
     } finally {
       setIsConnecting(false);
     }
@@ -58,17 +62,15 @@ const Join = () => {
             maxLength={6}
             disabled={isConnecting}
           />
-          {error && (
-            <p className="mt-2 text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
         </div>
 
         <button
           onClick={handleJoin}
           disabled={isConnecting}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg 
-            hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 
-            focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+            transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
+            disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isConnecting ? 'Connecting...' : 'Join Game'}
         </button>
