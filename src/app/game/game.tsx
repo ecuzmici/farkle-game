@@ -29,10 +29,10 @@ const FarkleGame = {
   }),
 
   moves: {
-    rollDice: (G: GameState, ctx) => {
-      if (!G.canRoll) return G;
+    rollDice: ({ G, ctx }) => {
+      if (!G.canRoll) return;
 
-      const newDice = G.dice.map((_, index) => 
+      const newDice = Array(6).fill(0).map((_, index) => 
         G.selectedDice[index] ? G.dice[index] : Math.floor(Math.random() * 6) + 1
       );
 
@@ -40,83 +40,76 @@ const FarkleGame = {
       const availableScore = calculatePossibleScore(unselectedDice);
 
       if (availableScore === 0) {
-        return {
-          ...G,
-          dice: newDice,
-          currentRoundScore: 0,
-          selectedDice: Array(6).fill(false),
-          canRoll: false,
-          diceAvailableForSelection: false
-        };
-      }
-
-      return {
-        ...G,
-        dice: newDice,
-        canRoll: false,
-        diceAvailableForSelection: true
+        ctx.events.endTurn();
+        
+        G.dice = newDice,
+        G.scores = G.scores,
+        G.currentRoundScore = 0,
+        G.selectedDice = Array(6).fill(false),
+        G.canRoll = false,
+        G.diceAvailableForSelection = false
+        return;
       };
+      
+        G.dice = newDice
+        G.scores = G.scores
+        G.currentRoundScore = G.currentRoundScore
+        G.selectedDice = G.selectedDice
+        G.canRoll = false
+        G.diceAvailableForSelection = true
+        return;
+      
     },
 
     selectDice: (G: GameState, ctx, selectedIndexes: number[]) => {
-      if (!G.diceAvailableForSelection || !selectedIndexes?.length) return G;
+      console.log('hiii', G.diceAvailableForSelection, !selectedIndexes?.length)
+      if (!G.diceAvailableForSelection || !selectedIndexes?.length) return;
 
       const selectedDice = selectedIndexes.map(i => G.dice[i]);
+      console.log(selectedDice)
       const score = calculateScore(selectedDice);
 
       if (score > 0) {
-        const newSelectedDice = Array(6).fill(false)
-          .map((_, i) => G.selectedDice[i] || selectedIndexes.includes(i));
+        selectedIndexes.forEach(i => {
+          G.selectedDice[i] = true;
+        });
 
-        const isHotDice = newSelectedDice.every(d => d);
+        G.currentRoundScore += score;
+        G.diceAvailableForSelection = false;
+        G.canRoll = true;
 
-        return {
-          ...G,
-          selectedDice: isHotDice ? Array(6).fill(false) : newSelectedDice,
-          currentRoundScore: G.currentRoundScore + score,
-          diceAvailableForSelection: false,
-          canRoll: true
-        };
+        if (G.selectedDice.every(d => d)) {
+          G.selectedDice = Array(6).fill(false);
+        }
       }
-
-      return G;
     },
 
     bankScore: (G: GameState, ctx) => {
-      if (G.diceAvailableForSelection) return G;
-      if (G.scores[ctx.currentPlayer] === 0 && G.currentRoundScore < 500) return G;
+      if (G.diceAvailableForSelection) return;
+      if (G.scores[ctx.currentPlayer] === 0 && G.currentRoundScore < 500) return;
 
-      const newScores = { ...G.scores };
-      newScores[ctx.currentPlayer] = G.scores[ctx.currentPlayer] + G.currentRoundScore;
-
-      return {
-        ...G,
-        scores: newScores,
-        currentRoundScore: 0,
-        selectedDice: Array(6).fill(false),
-        canRoll: true,
-        diceAvailableForSelection: false
-      };
+      G.scores[ctx.currentPlayer] += G.currentRoundScore;
+      G.currentRoundScore = 0;
+      G.selectedDice = Array(6).fill(false);
+      G.canRoll = true;
+      G.diceAvailableForSelection = false;
+      ctx.events.endTurn();
     },
 
     continueRolling: (G: GameState) => {
-      if (G.diceAvailableForSelection || G.currentRoundScore === 0) return G;
+      if (G.diceAvailableForSelection || G.currentRoundScore === 0) return;
 
-      return {
-        ...G,
-        canRoll: true,
-        diceAvailableForSelection: false
-      };
+      G.canRoll = true;
+      G.diceAvailableForSelection = false;
     }
   },
 
   turn: {
-    onBegin: (G: GameState) => ({
-      ...G,
-      selectedDice: Array(6).fill(false),
-      canRoll: true,
-      diceAvailableForSelection: false
-    }),
+    onBegin: (G: GameState) => {
+      G.selectedDice = Array(6).fill(false);
+      G.canRoll = true;
+      G.diceAvailableForSelection = false;
+    },
     order: {
       first: () => 0,
       next: (G, ctx) => (ctx.playOrderPos + 1) % ctx.numPlayers
@@ -124,7 +117,7 @@ const FarkleGame = {
   },
 
   endIf: (G: GameState) => {
-    if (!G?.scores) return;
+    if (!G?.scores) return false;
     if (G.scores['0'] >= 10000 || G.scores['1'] >= 10000) {
       return { winner: G.scores['0'] > G.scores['1'] ? '0' : '1' };
     }

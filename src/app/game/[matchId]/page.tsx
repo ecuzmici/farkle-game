@@ -18,7 +18,6 @@ const GamePage = ({ params }) => {
     board: Board,
     debug: true,
     matchID: matchId,
-    playerID: playerID,
   });
 
   return <GameClient playerID={playerID}/>;
