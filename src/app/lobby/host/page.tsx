@@ -14,8 +14,8 @@ const Host = () => {
   useEffect(() => {
     const generatedMatchID = nanoid(6).toUpperCase();
     setMatchID(generatedMatchID);
-
-    // Generate unique credentials for this host
+    
+    // Generate unique credentials for this session
     const credentials = generateCredentials();
 
     const client = Client({
@@ -25,38 +25,40 @@ const Host = () => {
       credentials,
       multiplayer: P2P({ 
         isHost: true,
-        onError: (error) => {
-          console.error('P2P Error:', error);
-          setIsConnecting(false);
-        },
-        // Configure PeerJS options
         peerOptions: {
-          debug: 3, // Enable detailed logging
-          host: '0.peerjs.com',
-          secure: true,
-          port: 443,
-          path: '/peerjs',
+          debug: 3,
+          host: 'localhost',
+          port: 9000,
+          path: '/myapp',
           config: {
             iceServers: [
               { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:global.stun.twilio.com:3478' }
+              { urls: 'stun:stun1.l.google.com:19302' },
+              { urls: 'stun:stun2.l.google.com:19302' }
             ]
           }
         }
       }),
     });
 
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+
+    const handleDisconnect = () => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        setTimeout(() => {
+          client.start();
+        }, 1000 * reconnectAttempts);
+      }
+    };
+
     client.start();
 
-    // Wait for successful connection before redirecting
     const unsubscribe = client.subscribe((state) => {
-      if (state && state.ctx) {
+      if (state && state.ctx && state.ctx.numPlayers === 2) {
         setIsConnecting(false);
-        // Only redirect when a second player joins
-        if (state.ctx.numPlayers === 2) {
-          unsubscribe();
-          router.push(`/game/${generatedMatchID}?role=host`);
-        }
+        router.push(`/game/${generatedMatchID}?role=host`);
       }
     });
 
