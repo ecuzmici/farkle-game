@@ -1,26 +1,24 @@
 // app/game/[matchId]/page.tsx
-"use client";
-import React, { use } from 'react';
+'use client';
+import { use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Client } from 'boardgame.io/react';
-import { P2P } from '@boardgame.io/p2p';
 import FarkleGame from "@/app/game/game";
 import Board from '@/app/components/board';
 
 const GamePage = ({ params }) => {
   const searchParams = useSearchParams();
   const role = searchParams.get('role');
-  const playerID = role === 'host' ? '0' : '1';
   const resolvedParams = use(params);
-  const matchID = resolvedParams.matchId;
-  
+  const matchId = resolvedParams.matchId;
+  const playerID = role === 'host' ? '0' : '1';
+
   const GameClient = Client({
     game: FarkleGame,
     board: Board,
-    matchID,
+    matchID: matchId,
     playerID,
-    multiplayer: P2P({ isHost: role === 'host' }),
-    debug: true
+    debug: false
   });
 
   return <GameClient />;
