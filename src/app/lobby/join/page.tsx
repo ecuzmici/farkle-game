@@ -1,10 +1,7 @@
-// components/Join.tsx
 "use client";
 import { useState } from "react";
-import { Client } from 'boardgame.io/client';
-import { P2P } from '@boardgame.io/p2p';
 import { useRouter } from 'next/navigation';
-import FarkleGame from "@/app/game/game";
+import { Room, RoomEvent } from 'livekit-client';
 
 const Join = () => {
   const [matchID, setMatchID] = useState('');
@@ -22,32 +19,23 @@ const Join = () => {
     setError('');
 
     try {
-      const client = Client({
-        game: FarkleGame,
-        matchID: matchID.toUpperCase(),
-        playerID: '1',
-        multiplayer: P2P(),
+      // Get token from your API
+      const response = await fetch('/api/livekit/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          roomName: matchID.toUpperCase(),
+          participantName: 'player'
+        })
       });
+      const { token } = await response.json();
 
-      client.start();
-
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          client.stop();
-          reject(new Error('Connection timeout'));
-        }, 10000);
-
-        const unsubscribe = client.subscribe((state) => {
-          if (state && state.ctx) {
-            clearTimeout(timeout);
-            unsubscribe();
-            resolve(true);
-          }
-        });
-      });
+      const room = new Room();
+      await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL, token);
 
       router.push(`/game/${matchID}?role=join`);
     } catch (err) {
+      console.error('Join error:', err);
       setError('Failed to connect. Please check the match ID.');
     } finally {
       setIsConnecting(false);
@@ -65,19 +53,22 @@ const Join = () => {
             value={matchID}
             onChange={(e) => setMatchID(e.target.value.toUpperCase())}
             placeholder="Enter Match ID"
-            className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 bg-gray-700 text-white placeholder-gray-400 rounded-lg 
+              focus:outline-none focus:ring-2 focus:ring-blue-500"
             maxLength={6}
             disabled={isConnecting}
           />
-          {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+          {error && (
+            <p className="mt-2 text-sm text-red-400">{error}</p>
+          )}
         </div>
 
         <button
           onClick={handleJoin}
           disabled={isConnecting}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
-            transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500
-            disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg 
+            hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 
+            focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isConnecting ? 'Connecting...' : 'Join Game'}
         </button>

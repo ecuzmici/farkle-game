@@ -1,70 +1,52 @@
+// components/Host.tsx
 "use client";
-import { nanoid } from "nanoid";
 import { useState, useEffect } from "react";
-import { Client } from 'boardgame.io/client';
-import { P2P, generateCredentials } from '@boardgame.io/p2p';
 import { useRouter } from 'next/navigation';
-import FarkleGame from "@/app/game/game";
+import { Room, RoomEvent } from 'livekit-client';
+import { nanoid } from "nanoid";
 
 const Host = () => {
   const [matchID, setMatchID] = useState('');
-  const [isConnecting, setIsConnecting] = useState(true);
+  const [room, setRoom] = useState<Room | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const generatedMatchID = nanoid(6).toUpperCase();
     setMatchID(generatedMatchID);
-    
-    // Generate unique credentials for this session
-    const credentials = generateCredentials();
 
-    const client = Client({
-      game: FarkleGame,
-      matchID: generatedMatchID,
-      playerID: '0',
-      credentials,
-      multiplayer: P2P({ 
-        isHost: true,
-        peerOptions: {
-          debug: 3,
-          host: 'localhost',
-          port: 9000,
-          path: '/myapp',
-          config: {
-            iceServers: [
-              { urls: 'stun:stun.l.google.com:19302' },
-              { urls: 'stun:stun1.l.google.com:19302' },
-              { urls: 'stun:stun2.l.google.com:19302' }
-            ]
+    const connectToRoom = async () => {
+      try {
+        // Get token from your API
+        const response = await fetch('/api/livekit/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            roomName: generatedMatchID,
+            participantName: 'host'
+          })
+        });
+        const { token } = await response.json();
+
+        const room = new Room();
+        console.log(process.env.NEXT_PUBLIC_LIVEKIT_URL)
+        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL, token);
+        
+        room.on(RoomEvent.ParticipantConnected, () => {
+          if (room.numParticipants === 1) {
+            router.push(`/game/${generatedMatchID}?role=host`);
           }
-        }
-      }),
-    });
+        });
 
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 3;
-
-    const handleDisconnect = () => {
-      if (reconnectAttempts < maxReconnectAttempts) {
-        reconnectAttempts++;
-        setTimeout(() => {
-          client.start();
-        }, 1000 * reconnectAttempts);
+        setRoom(room);
+      } catch (error) {
+        console.error('Failed to connect to room:', error);
       }
     };
 
-    client.start();
-
-    const unsubscribe = client.subscribe((state) => {
-      if (state && state.ctx && state.ctx.numPlayers === 2) {
-        setIsConnecting(false);
-        router.push(`/game/${generatedMatchID}?role=host`);
-      }
-    });
+    connectToRoom();
 
     return () => {
-      unsubscribe();
-      client.stop();
+      room?.disconnect();
     };
   }, []);
 
@@ -74,9 +56,7 @@ const Host = () => {
       <div className="bg-gray-700 px-6 py-3 rounded-lg">
         <p className="font-mono text-xl font-bold tracking-wide text-gray-200">{matchID}</p>
       </div>
-      <p className="mt-4 text-sm text-gray-400">
-        {isConnecting ? "Setting up game..." : "Waiting for player to join..."}
-      </p>
+      <p className="mt-4 text-sm text-gray-400">Waiting for player to join...</p>
     </div>
   );
 };
