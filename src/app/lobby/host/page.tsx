@@ -1,13 +1,11 @@
-// components/Host.tsx
 "use client";
 import { nanoid } from "nanoid";
 import { useState, useEffect } from "react";
-import { Room } from 'livekit-client';
+import { Room, RoomEvent } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 
 const Host = () => {
   const [matchID, setMatchID] = useState('');
-  const [isConnecting, setIsConnecting] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
 
@@ -20,7 +18,7 @@ const Host = () => {
         const response = await fetch('/api/livekit/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: JSON.stringify({ 
             roomName: generatedMatchID,
             participantName: `host-${generatedMatchID}`
           })
@@ -28,12 +26,20 @@ const Host = () => {
 
         const { token } = await response.json();
         if (!token) throw new Error('Failed to get token');
-        
-        const room = new Room();
-        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token);
 
-        room.once('connected', () => {
+        const room = new Room();
+        
+        room.on(RoomEvent.Connected, () => {
+          console.log('Host connected to room');
+        });
+
+        room.on(RoomEvent.ParticipantConnected, () => {
+          console.log('Participant joined, redirecting...');
           router.push(`/game/${generatedMatchID}?role=host`);
+        });
+
+        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token, {
+          autoSubscribe: true
         });
 
         return () => {
@@ -42,12 +48,11 @@ const Host = () => {
       } catch (err) {
         console.error('Failed to connect:', err);
         setError('Failed to create game room');
-        setIsConnecting(false);
       }
     };
 
     connectToRoom();
-  }, []);
+  }, [router]);
 
   return (
     <div className="flex flex-col items-center justify-center p-6 h-screen w-screen bg-gray-900">
@@ -58,9 +63,7 @@ const Host = () => {
       {error ? (
         <p className="mt-4 text-sm text-red-400">{error}</p>
       ) : (
-        <p className="mt-4 text-sm text-gray-400">
-          {isConnecting ? "Setting up game..." : "Waiting for player to join..."}
-        </p>
+        <p className="mt-4 text-sm text-gray-400">Waiting for player to join...</p>
       )}
     </div>
   );
