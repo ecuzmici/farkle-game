@@ -2,13 +2,10 @@
 'use client';
 import { useState } from 'react';
 import Die from './die';
+import { GameState } from '../game/game';
 
 interface BoardProps {
-  G: {
-    dice: number[];
-    selectedDice: boolean[];
-    currentRoundScore: number;
-  };
+  G: GameState;
   moves: {
     rollDice: () => void;
     selectDice: (indexes: number[]) => void;
@@ -24,9 +21,10 @@ interface BoardProps {
 const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
   const [selectedIndexes, setSelectedIndexes] = useState<number[]>([]);
   const isMyTurn = playerID === ctx.currentPlayer;
+  const isHotDice = G.selectedDice.every(d => d);
 
   const handleDieClick = (index: number) => {
-    if (!isMyTurn || G.selectedDice[index]) return;
+    if (!isMyTurn || G.selectedDice[index] || !G.diceAvailableForSelection) return;
     
     setSelectedIndexes(prev => 
       prev.includes(index) 
@@ -44,6 +42,13 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
 
   return (
     <div className="flex flex-col items-center justify-center p-6">
+      {/* Game Status Header */}
+      <div className="mb-6 text-white text-center">
+        <div className="text-xl mb-2">Player {parseInt(playerID) + 1}</div>
+        <div>Total Score: {G.scores[playerID]}</div>
+      </div>
+
+      {/* Dice Grid */}
       <div className="grid grid-cols-3 grid-rows-2 gap-4 p-4">
         {G.dice.map((value, index) => (
           <div
@@ -53,7 +58,7 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
               cursor-pointer transform transition-all duration-200
               ${G.selectedDice[index] ? 'opacity-50' : 'hover:scale-105'}
               ${selectedIndexes.includes(index) ? 'ring-2 ring-blue-500 rounded-xl' : ''}
-              ${!isMyTurn ? 'cursor-not-allowed' : ''}
+              ${(!isMyTurn || !G.diceAvailableForSelection) ? 'cursor-not-allowed' : ''}
             `}
           >
             <Die side={value} />
@@ -61,10 +66,11 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
         ))}
       </div>
 
+      {/* Action Buttons */}
       <div className="space-x-4 mt-6">
         <button
           onClick={() => moves.rollDice()}
-          disabled={!isMyTurn || selectedIndexes.length > 0}
+          disabled={!isMyTurn || !G.canRoll || selectedIndexes.length > 0}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -73,7 +79,7 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
 
         <button
           onClick={handleConfirmSelection}
-          disabled={!isMyTurn || selectedIndexes.length === 0}
+          disabled={!isMyTurn || !G.diceAvailableForSelection || selectedIndexes.length === 0}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 
             disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -84,7 +90,7 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
           <>
             <button
               onClick={() => moves.continueRolling()}
-              disabled={!isMyTurn}
+              disabled={!isMyTurn || G.diceAvailableForSelection}
               className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -93,7 +99,11 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
 
             <button
               onClick={() => moves.bankScore()}
-              disabled={!isMyTurn}
+              disabled={
+                !isMyTurn || 
+                G.diceAvailableForSelection || 
+                (G.scores[playerID] === 0 && G.currentRoundScore < 500)
+              }
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 
                 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -103,8 +113,26 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
         )}
       </div>
 
-      <div className="mt-4 text-white">
-        {isMyTurn ? `Current Score: ${G.currentRoundScore}` : "Opponent's Turn"}
+      {/* Game Status Footer */}
+      <div className="mt-6 text-white space-y-2 text-center">
+        {isMyTurn ? (
+          <>
+            <div className="text-lg">Current Round Score: {G.currentRoundScore}</div>
+            {G.scores[playerID] === 0 && (
+              <div className="text-yellow-400">Need 500 points to get on the board!</div>
+            )}
+            {isHotDice && (
+              <div className="text-green-400">Hot Dice! Roll again with all dice!</div>
+            )}
+            <div className="text-sm">
+              {G.canRoll ? "Roll the dice!" : 
+               G.diceAvailableForSelection ? "Select scoring dice!" :
+               "Choose to continue rolling or bank your points!"}
+            </div>
+          </>
+        ) : (
+          <div className="text-xl">Opponent's Turn</div>
+        )}
       </div>
     </div>
   );
