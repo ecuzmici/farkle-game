@@ -1,4 +1,3 @@
-// components/Board.tsx
 'use client';
 import { useState } from 'react';
 import Die from './die';
@@ -26,15 +25,16 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
   const handleDieClick = (index: number) => {
     if (!isMyTurn || G.selectedDice[index] || !G.diceAvailableForSelection) return;
     
-    setSelectedIndexes(prev => 
-      prev.includes(index) 
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
+    const newSelectedIndexes = selectedIndexes.includes(index) 
+      ? selectedIndexes.filter(i => i !== index)
+      : [...selectedIndexes, index];
+  
+    setSelectedIndexes(newSelectedIndexes);
   };
 
   const handleConfirmSelection = () => {
     if (selectedIndexes.length > 0) {
+      console.log(selectedIndexes)
       moves.selectDice(selectedIndexes);
       setSelectedIndexes([]);
     }
@@ -101,8 +101,7 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
               onClick={() => moves.bankScore()}
               disabled={
                 !isMyTurn || 
-                G.diceAvailableForSelection || 
-                (G.scores[playerID] === 0 && G.currentRoundScore < 500)
+                G.diceAvailableForSelection
               }
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 
                 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -118,9 +117,6 @@ const Board = ({ G, moves, ctx, playerID }: BoardProps) => {
         {isMyTurn ? (
           <>
             <div className="text-lg">Current Round Score: {G.currentRoundScore}</div>
-            {G.scores[playerID] === 0 && (
-              <div className="text-yellow-400">Need 500 points to get on the board!</div>
-            )}
             {isHotDice && (
               <div className="text-green-400">Hot Dice! Roll again with all dice!</div>
             )}

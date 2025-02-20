@@ -15,36 +15,48 @@ const Host = () => {
         const generatedMatchID = nanoid(6).toUpperCase();
         setMatchID(generatedMatchID);
 
-        const response = await fetch('/api/livekit/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            roomName: generatedMatchID,
-            participantName: `host-${generatedMatchID}`
-          })
-        });
+        // const response = await fetch('/api/livekit/token', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({ 
+        //     roomName: generatedMatchID,
+        //     participantName: `host-${generatedMatchID}`
+        //   })
+        // });
 
-        const { token } = await response.json();
-        if (!token) throw new Error('Failed to get token');
+        // const { token } = await response.json();
+        // if (!token) throw new Error('Failed to get token');
 
-        const room = new Room();
+        // const room = new Room();
         
-        room.on(RoomEvent.Connected, () => {
-          console.log('Host connected to room');
-        });
+        // room.on(RoomEvent.Connected, () => {
+        //   console.log('Host connected to room');
+        // });
 
-        room.on(RoomEvent.ParticipantConnected, () => {
-          console.log('Participant joined, redirecting...');
-          router.push(`/game/${generatedMatchID}?role=host`);
-        });
+        // room.on(RoomEvent.ParticipantConnected, () => {
+        //   console.log('Participant joined, redirecting...');
+        //   router.push(`/game/${generatedMatchID}?role=host`);
+        // });
 
-        await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token, {
-          autoSubscribe: true
-        });
+        // room.on(RoomEvent.DataReceived, (payload, participant) => {
+        //   const message = JSON.parse(new TextDecoder().decode(payload));
+        //   console.log('Message received from:', participant.identity, message);
+        
+        //   // Handle incoming game state updates (e.g., update boardgame.io state)
+        // });
+        
+        // room.localParticipant.publishData(
+        //   JSON.stringify({ type: 'stateUpdate', data: { ...gameState } }),
+        //   { kind: 'reliable' }
+        // );
 
-        return () => {
-          room.disconnect();
-        };
+        // await room.connect(process.env.NEXT_PUBLIC_LIVEKIT_URL!, token, {
+        //   autoSubscribe: true
+        // });
+
+        // return () => {
+        //   room.disconnect();
+        // };
       } catch (err) {
         console.error('Failed to connect:', err);
         setError('Failed to create game room');
