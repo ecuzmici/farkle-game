@@ -16,12 +16,12 @@ const GamePage = ({ params }) => {
   const GameClient = Client({
     game: FarkleGame,
     board: Board,
+    debug: true,
     matchID: matchId,
-    playerID,
-    debug: false
+    playerID: playerID,
   });
 
-  return <GameClient />;
+  return <GameClient playerID={playerID}/>;
 };
 
 export default GamePage;
