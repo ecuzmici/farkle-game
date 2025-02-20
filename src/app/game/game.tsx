@@ -1,5 +1,17 @@
+// app/game/game.ts
+export interface GameState {
+  dice: number[];
+  scores: {
+    '0': number;
+    '1': number;
+  };
+  currentRoundScore: number;
+  selectedDice: boolean[];
+  targetScore: number;
+}
+
 const FarkleGame = {
-  setup: () => ({
+  setup: (): GameState => ({
     dice: Array(6).fill(1),
     scores: {
       '0': 0,
@@ -11,15 +23,14 @@ const FarkleGame = {
   }),
 
   moves: {
-    rollDice: (G, ctx) => {
+    rollDice: (G: GameState) => {
       // Only roll unselected dice
       G.dice = G.dice.map((die, index) => 
         G.selectedDice[index] ? die : Math.floor(Math.random() * 6) + 1
       );
     },
 
-    selectDice: (G, ctx, selectedIndexes) => {
-      // Calculate score for selected combination
+    selectDice: (G: GameState, ctx, selectedIndexes: number[]) => {
       const selected = selectedIndexes.map(i => G.dice[i]);
       const score = calculateScore(selected);
       
@@ -31,46 +42,39 @@ const FarkleGame = {
       }
     },
 
-    scoreAndPass: (G, ctx) => {
-      // Bank the current round score
+    bankScore: (G: GameState, ctx) => {
       G.scores[ctx.currentPlayer] += G.currentRoundScore;
-      
-      // Reset for next turn
       G.currentRoundScore = 0;
       G.selectedDice = Array(6).fill(false);
       G.dice = Array(6).fill(1);
-      
       ctx.events.endTurn();
     },
 
-    scoreAndContinue: (G, ctx) => {
-      // Check if all dice are used
+    continueRolling: (G: GameState) => {
       if (G.selectedDice.every(d => d)) {
-        // "Hot dice" - reset all dice for new roll
+        // Hot dice - reset all dice
         G.selectedDice = Array(6).fill(false);
       }
     }
   },
 
   turn: {
-    onBegin: (G, ctx) => {
+    onBegin: (G: GameState) => {
       G.currentRoundScore = 0;
       G.selectedDice = Array(6).fill(false);
     }
   },
 
-  endIf: (G, ctx) => {
+  endIf: (G: GameState) => {
     if (G.scores['0'] >= G.targetScore || G.scores['1'] >= G.targetScore) {
       return { winner: G.scores['0'] > G.scores['1'] ? '0' : '1' };
     }
   }
 };
 
-// Helper function to calculate score based on Kingdom Come: Deliverance rules
-function calculateScore(dice) {
+function calculateScore(dice: number[]): number {
   if (dice.length === 0) return 0;
   
-  // Sort dice for easier combination checking
   const sorted = [...dice].sort((a, b) => a - b);
   
   // Check for straights
@@ -82,24 +86,24 @@ function calculateScore(dice) {
     if (sorted.join(',') === '2,3,4,5,6') return 750;
   }
 
-  // Check for three or more of a kind
+  // Count occurrences
   const counts = dice.reduce((acc, val) => {
     acc[val] = (acc[val] || 0) + 1;
     return acc;
-  }, {});
+  }, {} as Record<number, number>);
 
-  for (const [value, count] of Object.entries(counts)) {
-    if (count >= 3) {
-      const baseScore = value === '1' ? 1000 : Number(value) * 100;
-      return baseScore * Math.pow(2, count - 3); // Double for each additional die
-    }
-  }
-
-  // Check for individual 1s and 5s
+  // Check for three or more of a kind
   let score = 0;
-  dice.forEach(die => {
-    if (die === 1) score += 100;
-    if (die === 5) score += 50;
+  Object.entries(counts).forEach(([value, count]) => {
+    const numValue = parseInt(value);
+    if (count >= 3) {
+      score += numValue === 1 ? 1000 : numValue * 100;
+      score *= Math.pow(2, count - 3); // Double for each additional die
+    } else {
+      // Add single 1s and 5s
+      if (numValue === 1) score += count * 100;
+      if (numValue === 5) score += count * 50;
+    }
   });
 
   return score;
