@@ -1,4 +1,5 @@
 // app/game/game.ts
+
 export interface GameState {
   dice: number[];
   scores: {
@@ -30,7 +31,7 @@ const FarkleGame = {
       );
     },
 
-    selectDice: (G: GameState, ctx, selectedIndexes: number[]) => {
+    selectDice: (G: GameState, ctx: any, selectedIndexes: number[]) => {
       const selected = selectedIndexes.map(i => G.dice[i]);
       const score = calculateScore(selected);
       
@@ -42,7 +43,7 @@ const FarkleGame = {
       }
     },
 
-    bankScore: (G: GameState, ctx) => {
+    bankScore: (G: GameState, ctx: any) => {
       G.scores[ctx.currentPlayer] += G.currentRoundScore;
       G.currentRoundScore = 0;
       G.selectedDice = Array(6).fill(false);
@@ -66,9 +67,12 @@ const FarkleGame = {
   },
 
   endIf: (G: GameState) => {
+    if (!G || !G.scores) return false;
+    
     if (G.scores['0'] >= G.targetScore || G.scores['1'] >= G.targetScore) {
       return { winner: G.scores['0'] > G.scores['1'] ? '0' : '1' };
     }
+    return false;
   }
 };
 
