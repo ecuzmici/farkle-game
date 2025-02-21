@@ -119,7 +119,7 @@ We welcome contributions from the community! Here's how you can get involved:
 
 ## 📜 License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/ecuzmici/farkle-multiplayer/LICENSE.md) file for details.
+This project is licensed under the MIT License. See the [LICENSE](https://github.com/ecuzmici/farkle-game/blob/main/LICENSE.md) file for details.
 
 ---
 
