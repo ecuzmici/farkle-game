@@ -1,5 +1,9 @@
+// @ts-nocheck
 export interface GameState {
-  dice: number[];
+  dice: {
+    '0': number[];
+    '1': number[];
+  };
   scores: {
     '0': number;
     '1': number;
@@ -8,6 +12,7 @@ export interface GameState {
   selectedDice: boolean[];
   canRoll: boolean;
   diceAvailableForSelection: boolean;
+  farkle: [boolean, boolean]; // Array of two booleans for individual Farkle flags
 }
 
 const FarkleGame = {
@@ -15,7 +20,10 @@ const FarkleGame = {
   numPlayers: 2,
 
   setup: () => ({
-    dice: Array(6).fill(0),
+    dice: {
+      '0': Array(6).fill(0),
+      '1': Array(6).fill(0),
+    },
     scores: {
       '0': 0,
       '1': 0,
@@ -24,32 +32,37 @@ const FarkleGame = {
     selectedDice: Array(6).fill(false),
     canRoll: true,
     diceAvailableForSelection: false,
-    winningScore: 4000
+    farkle: [false, false], // Initialize both players' Farkle flags to false
+    winningScore: 10000, // Standard Farkle winning score
   }),
 
   moves: {
     rollDice: ({ G, ctx, events }) => {
       if (!G.canRoll) return;
 
+      const currentPlayer = ctx.currentPlayer;
       const newDice = Array(6).fill(0).map((_, index) =>
-        G.selectedDice[index] ? G.dice[index] : Math.floor(Math.random() * 6) + 1
+        G.selectedDice[index] ? G.dice[currentPlayer][index] : Math.floor(Math.random() * 6) + 1
       );
 
       const unselectedDice = newDice.filter((_, i) => !G.selectedDice[i]);
       const availableScore = calculatePossibleScore(unselectedDice);
 
-      if (availableScore === 0) {
-        // Farkle: End turn with zero score
+      if (availableScore === false) {
+        console.log("BUST");
+        // Farkle (no scoring dice): End turn with zero score
         G.currentRoundScore = 0;
         G.selectedDice = Array(6).fill(false);
-        G.canRoll = false;
+        G.canRoll = true;
+        G.farkle[parseInt(currentPlayer)] = true; // Set Farkle flag for the current player
         G.diceAvailableForSelection = false;
         events.endTurn();
         return;
       }
 
-      G.dice = newDice;
+      G.dice[currentPlayer] = newDice;
       G.canRoll = false;
+      G.farkle[parseInt(currentPlayer)] = false; // Reset Farkle flag for the current player after a successful roll
       G.diceAvailableForSelection = true;
 
       // Check for Hot Dice (all dice scored)
@@ -58,40 +71,31 @@ const FarkleGame = {
       }
     },
 
-    selectDice: ({G, ctx}, selectedIndexes: number[]) => {
-      // Ensure selectedIndexes is not empty
-      console.log("Parameters received in selectDice:");
-      console.log("G:", G);
-      console.log("ctx:", ctx);
-      console.log("selectedIndexes:", selectedIndexes); // Should match what you passed
+    selectDice: ({ G, ctx }, selectedIndexes: number[]) => {
       if (!selectedIndexes?.length) return;
-      // Extract the values of the selected dice
-      const selectedDiceValues = selectedIndexes.map(i => G.dice[i]);
-    
-      // Calculate score for the selected dice
+
+      const currentPlayer = ctx.currentPlayer;
+      const selectedDiceValues = selectedIndexes.map(i => G.dice[currentPlayer][i]);
       const score = calculateScore(selectedDiceValues);
-    
-      // If the selected dice form a valid scoring combination
+
       if (score > 0) {
-        // Mark the selected dice as "used"
         selectedIndexes.forEach(i => {
           G.selectedDice[i] = true;
         });
-    
-        // Add the score to the current round score
+
         G.currentRoundScore += score;
-    
+
         // Allow rolling again if not all dice are selected
         if (!G.selectedDice.every(d => d)) {
           G.canRoll = true;
         }
-    
+
         // Reset dice selection availability
         G.diceAvailableForSelection = false;
       }
     },
 
-    bankScore: ({G, ctx, events}) => {
+    bankScore: ({ G, ctx, events }) => {
       if (G.diceAvailableForSelection) return;
 
       G.scores[ctx.currentPlayer] += G.currentRoundScore;
@@ -99,11 +103,11 @@ const FarkleGame = {
       G.selectedDice = Array(6).fill(false);
       G.canRoll = true;
       G.diceAvailableForSelection = false;
-
+      G.farkle[parseInt(ctx.currentPlayer)] = false; // Reset Farkle flag for the current player on bank
       events.endTurn();
     },
 
-    continueRolling: ({G ,ctx}) => {
+    continueRolling: ({ G }) => {
       if (G.diceAvailableForSelection || G.currentRoundScore === 0) return;
 
       G.canRoll = true;
@@ -112,31 +116,42 @@ const FarkleGame = {
   },
 
   turn: {
-    onBegin: (G: GameState) => {
-      G.dice = Array(6).fill(0);
+    onBegin: ({G, ctx}) => {
+      const currentPlayer = ctx.currentPlayer;
+
+      // Reset state at the start of each turn
+      G.dice[currentPlayer] = Array(6).fill(0);
       G.selectedDice = Array(6).fill(false);
       G.canRoll = true;
       G.diceAvailableForSelection = false;
+      G.farkle[parseInt(currentPlayer)] = false;
     },
     order: {
       first: () => 0,
-      next: ({ G, ctx }) => {
-        const nextPos = (ctx.playOrderPos + 1) % ctx.numPlayers;
-        return nextPos;
-      },
+      next: ({ ctx }) => (ctx.playOrderPos + 1) % ctx.numPlayers,
     },
   },
 
-  endIf: (G: GameState) => {
-    if (!G?.scores) return false;
-    if (G.scores['0'] >= G.winningScore || G.scores['1'] >= G.winningScore) {
-      return { winner: G.scores['0'] > G.scores['1'] ? '0' : '1' };
+  endIf: ({G, ctx}) => {
+    if (!G.scores) return false;
+
+    const winningPlayer =
+      Object.entries(G.scores).find(([_, score]) => score >= G.winningScore);
+
+    if (winningPlayer) {
+      const [winnerID] = winningPlayer;
+
+      // Allow final round for other players to beat the high score
+      if (ctx.playOrderPos === ctx.numPlayers - 1) {
+        return { winner: winnerID };
+      }
     }
+
     return false;
   },
 };
 
-function calculateScore(dice: number[]): number {
+export function calculateScore(dice: number[]): number {
   if (!dice.length) return 0;
 
   const counts = dice.reduce((acc, val) => {
@@ -161,6 +176,11 @@ function calculateScore(dice: number[]): number {
   const triplets = Object.values(counts).filter(count => count >= 3).length;
   if (triplets === 2) {
     return 2500;
+  }
+
+  // Check for four of a kind + a pair
+  if (Object.values(counts).includes(4) && pairs === 1) {
+    return 1500;
   }
 
   // Process multiple dice combinations
@@ -189,8 +209,8 @@ function calculateScore(dice: number[]): number {
   return score;
 }
 
-function calculatePossibleScore(dice: number[]): number {
-  if (!dice.length) return 0;
+export function calculatePossibleScore(dice: number[]): boolean {
+  if (!dice.length) return false;
   
   const counts = dice.reduce((acc, val) => {
     acc[val] = (acc[val] || 0) + 1;
@@ -202,12 +222,13 @@ function calculatePossibleScore(dice: number[]): number {
     counts[5] || 
     Object.values(counts).some(count => count >= 3) ||
     (dice.length === 6 && [1,2,3,4,5,6].every(n => dice.includes(n))) ||
+    (dice.length >= 5 && [1,2,3,4,5].every(n => dice.includes(n))) ||
     (dice.length === 6 && Object.values(counts).every(count => count === 2))
   ) {
-    return 1;
+    return true;
   }
 
-  return 0;
+  return false;
 }
 
 export default FarkleGame;
