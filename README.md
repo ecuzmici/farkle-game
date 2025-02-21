@@ -19,7 +19,7 @@ Welcome to the **Farkle Multiplayer Game** repository! This project is a digital
 
 ## 📝 About the Project
 
-**Farkle Multiplayer Game** brings the classic dice game to your browser. Play with friends in real-time and compete to reach 10,000 points first! This project is built using modern web technologies like React, Next.js, and boardgame.io, with its experimental P2P library enabling seamless peer-to-peer connections.
+**Farkle Multiplayer Game** brings the classic dice game to your browser. Play with friends in real-time and compete to reach 4,000 points first! This project is built using modern web technologies like React, Next.js, and boardgame.io, with its experimental P2P library enabling seamless peer-to-peer connections.
 
 ---
 
@@ -30,21 +30,21 @@ Welcome to the **Farkle Multiplayer Game** repository! This project is a digital
 - 🧮 **Score Calculation**: Adheres to official Farkle scoring rules.
 - 🔥 **Hot Dice Mechanics**: Keep rolling when all six dice score!
 - ❌ **Farkle Detection**: Lose your turn if no scoring dice are rolled.
-- 🏆 **Winning Logic**: Reach 10,000 points to trigger the final round.
+- 🏆 **Winning Logic**: Reach 4,000 points to win the game.
 - 💻 **Real-Time Synchronization**: Game state is shared between players using boardgame.io's P2P library.
 
 ---
 
 ## 🎲 How to Play
 
-1. **Objective**: Be the first player to score 10,000 points or more.
+1. **Objective**: Be the first player to score 4,000 points or more.
 2. **Gameplay**:
    - Players take turns rolling six dice.
    - After each roll, select at least one scoring die (1s, 5s, or combinations like three of a kind).
    - Decide whether to bank your points or risk rolling the remaining dice.
    - If no scoring dice are rolled, you "Farkle" and lose all points for that turn.
 3. **Winning**:
-   - Once a player reaches 10,000 points, all other players get one final turn.
+   - Once a player reaches 4,000 points, all other players get one final turn.
    - The player with the highest score wins!
 
 For detailed rules, refer to the [official Farkle rules](https://farkle.games/official-rules/).
