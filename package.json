@@ -2,15 +2,12 @@
   "name": "farkle-game",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://yourusername.github.io/your-repo-name",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "export": "next export",
-    "predeploy": "npm run build && npm run export && touch out/.nojekyll",
-    "deploy": "gh-pages -d out -t true"
+    "test": "jest"
   },
   "dependencies": {
     "@boardgame.io/p2p": "^0.4.4",

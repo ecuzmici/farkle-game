@@ -21,7 +21,7 @@ const GamePage = ({ params }) => {
   const GameClient = Client({
     game: FarkleGame,
     board: Board,
-    debug: true,
+    debug: false,
     multiplayer: multiplayerConfig,
     matchID: matchId,
   });
