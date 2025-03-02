@@ -2,11 +2,14 @@
   "name": "farkle-game",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://yourusername.github.io/your-repo-name",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "dev": "next dev",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d out",
     "test": "jest"
   },
   "dependencies": {
@@ -30,6 +33,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.1.7",
+    "gh-pages": "^6.3.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8",
