@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  output: 'export',
   assetPrefix: '/farkle-game/',
   basePath: '/farkle-game',
 };

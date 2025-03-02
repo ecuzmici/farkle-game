@@ -5,12 +5,12 @@
   "homepage": "https://yourusername.github.io/your-repo-name",
   "scripts": {
     "dev": "next dev",
-    "build": "next build --no-lint",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d out",
-    "test": "jest"
+    "export": "next export",
+    "predeploy": "npm run build && npm run export && touch out/.nojekyll",
+    "deploy": "gh-pages -d out -t true"
   },
   "dependencies": {
     "@boardgame.io/p2p": "^0.4.4",
