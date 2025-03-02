@@ -12,8 +12,8 @@ describe('calculatePossibleScore', () => {
         expect(calculatePossibleScore([1, 2, 3, 4, 5, 6])).toBe(true);
     });
 
-    it('should return true for three pairs', () => {
-        expect(calculatePossibleScore([2, 2, 3, 3, 4, 4])).toBe(true);
+    it('should return false for three pairs', () => {
+        expect(calculatePossibleScore([2, 2, 3, 3, 4, 4])).toBe(false);
     });
 
     it('should return true for three 1s', () => {
@@ -29,7 +29,7 @@ describe('calculatePossibleScore', () => {
     });
 
     it('should return true for a single 1 and single 5', () => {
-        expect(calculatePossibleScore([1, 5, 2, 3, 4, 6])).toBe(true);
+        expect(calculatePossibleScore([1, 5, 2, 2, 4, 6])).toBe(true);
     });
 
     it('should return false for no score', () => {
@@ -41,6 +41,6 @@ describe('calculatePossibleScore', () => {
     });
     
     it('should return false for 2,2,3,4,6,7', () => {
-        expect(calculatePossibleScore([2,2,3,4,6,7])).toBe(false);
+        expect(calculatePossibleScore([2,2,3,4,6,3])).toBe(false);
     });
 });

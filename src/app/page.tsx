@@ -1,28 +1,28 @@
-import Image from 'next/image'
 import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+    <div className="min-h-screen bg-gray-900 text-white font-mono flex flex-col items-center justify-center p-8">
+      <div className="p-8 rounded-lg shadow-md bg-gray-800 max-w-md w-full text-center">
+        <h1 className="text-3xl font-bold mb-8">Farkle</h1>
+        <div className="space-y-4">
           <Link
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+            className="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 
+              transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             href="/lobby/host"
           >
-            Host
+            Host Game
           </Link>
 
           <Link
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
+            className="block w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 
+              transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
             href="/lobby/join"
           >
-            Join
+            Join Game
           </Link>
         </div>
-      </main>
+      </div>
     </div>
   )
 }
-
-;<body></body>

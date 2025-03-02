@@ -5,6 +5,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --dice-bg-color: #ffffff;
+  --dice-border-color: #e0e0e0;
+  --pip-color: #333333;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,30 +24,27 @@ body {
 }
 
 .dice {
-  width: 100px;
-  height: 100px;
-  background-color: #ffffff;
-  border-radius: 16px;  /* Increased for softer corners */
-  border: 1px solid #e0e0e0;  /* Lighter, thinner border */
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  background-color: var(--dice-bg-color);
+  border-radius: 16%;
+  border: 1px solid var(--dice-border-color);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  padding: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);  /* Subtle shadow */
-  transition: transform 0.2s ease;  /* Smooth hover effect */
-}
-
-.dice:hover {
-  transform: translateY(-2px);
+  padding: 12%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
 }
 
 .pip {
-  width: 10px;
-  height: 10px;
-  background-color: #333333;  /* Softer black */
+  width: 50%;
+  height: 50%;
+  background-color: var(--pip-color);
   border-radius: 50%;
-  margin: auto;
-  opacity: 0.8;  /* Slightly transparent */
+  place-self: center;
+  opacity: 0.8;
 }
 
 /* Common styles for all faces */
@@ -81,3 +81,4 @@ body {
 .dice-6 .pip:nth-child(4) { grid-area: 1 / 3 / 2 / 4; }
 .dice-6 .pip:nth-child(5) { grid-area: 2 / 3 / 3 / 4; }
 .dice-6 .pip:nth-child(6) { grid-area: 3 / 3 / 4 / 4; }
+
